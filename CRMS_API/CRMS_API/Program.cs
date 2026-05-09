@@ -48,15 +48,24 @@ builder.Services.AddAuthentication("BasicAuth")
 // Enables role-based access control on endpoints
 builder.Services.AddAuthorization();
 
+// Allow requests from any origin (needed for HTML client files)
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseCors();
 
 // Order matters — authentication must come before authorization
 app.UseAuthentication();

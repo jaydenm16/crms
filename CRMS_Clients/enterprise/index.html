@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRMS — Enterprise Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    .hidden { display: none !important; }
+
+    nav { background: #1a1a2e; color: white; padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; }
+    nav h1 { font-size: 1.2rem; letter-spacing: 1px; }
+    nav button { background: #e94560; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
+    .tabs { display: flex; gap: 8px; padding: 20px 30px 0; flex-wrap: wrap; }
+    .tab { padding: 10px 20px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; background: #dde; font-weight: 600; }
+    .tab.active { background: white; color: #e94560; }
+
+    .page { background: white; margin: 0 30px 30px; padding: 30px; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+    .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a1a2e; }
+    .auth-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; }
+    .auth-box h2 { margin-bottom: 24px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #555; }
+    input, select { width: 100%; padding: 10px 14px; border: 1.5px solid #dde; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.2s; }
+    input:focus, select:focus { border-color: #e94560; }
+    .btn { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-outline { background: white; color: #e94560; border: 2px solid #e94560; }
+    .btn-sm { width: auto; padding: 6px 14px; font-size: 0.82rem; margin-top: 0; margin-right: 4px; }
+    .btn-success { background: #28a745; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-danger { background: #dc3545; }
+    .btn-info { background: #17a2b8; }
+
+    .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+    .alert-success { background: #d4edda; color: #155724; }
+    .alert-error { background: #f8d7da; color: #721c24; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1a1a2e; color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.88rem; vertical-align: middle; }
+    tr:hover td { background: #f9f9ff; }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-approved { background: #d4edda; color: #155724; }
+    .badge-active { background: #cce5ff; color: #004085; }
+    .badge-completed { background: #e2e3e5; color: #383d41; }
+    .badge-cancelled { background: #f8d7da; color: #721c24; }
+    .badge-rejected { background: #f8d7da; color: #721c24; }
+    .badge-available { background: #d4edda; color: #155724; }
+    .badge-rented { background: #f8d7da; color: #721c24; }
+    .badge-maintenance { background: #fff3cd; color: #856404; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-header h2 { font-size: 1.3rem; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 20px; }
+    .modal-footer { display: flex; gap: 10px; margin-top: 16px; }
+
+    .cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .car-card { border: 1.5px solid #eee; border-radius: 10px; padding: 20px; }
+    .car-card h3 { font-size: 1rem; margin-bottom: 8px; }
+    .car-card p { font-size: 0.85rem; color: #666; margin-bottom: 4px; }
+    .car-actions { margin-top: 12px; display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen" class="auth-wrap">
+  <div class="auth-box">
+    <h2>🏢 CRMS Enterprise Portal</h2>
+    <div id="authAlert"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUsername" placeholder="Staff or Admin username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Password" />
+    </div>
+    <button class="btn" onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden">
+  <nav>
+    <h1>🏢 CRMS Enterprise Portal</h1>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span id="welcomeMsg" style="font-size:0.9rem;opacity:0.8;"></span>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="tabs">
+    <button class="tab active" id="tabBookings" onclick="showTab('bookingsTab', this)">All Bookings</button>
+    <button class="tab hidden" id="tabCars" onclick="showTab('carsTab', this)">Manage Cars</button>
+    <button class="tab hidden" id="tabUsers" onclick="showTab('usersTab', this)">All Users</button>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div id="bookingsTab" class="page">
+    <div class="section-header">
+      <h2>All Bookings</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadBookings()">↻ Refresh</button>
+    </div>
+    <div id="bookingsAlert"></div>
+    <div id="bookingsTable"></div>
+  </div>
+
+  <!-- CARS (Admin only) -->
+  <div id="carsTab" class="page hidden">
+    <div class="section-header">
+      <h2>Manage Cars</h2>
+      <button class="btn btn-sm" onclick="openCarModal()">+ Add Car</button>
+    </div>
+    <div id="carsAlert"></div>
+    <div id="carsGrid" class="cars-grid"></div>
+  </div>
+
+  <!-- USERS (Admin only) -->
+  <div id="usersTab" class="page hidden">
+    <div class="section-header">
+      <h2>All Users</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadUsers()">↻ Refresh</button>
+    </div>
+    <div id="usersAlert"></div>
+    <div id="usersTable"></div>
+  </div>
+</div>
+
+<!-- CAR MODAL -->
+<div id="carModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 id="carModalTitle">Add New Car</h3>
+    <div id="carModalAlert"></div>
+    <div class="form-group"><label>Make</label><input type="text" id="carMake" placeholder="e.g. Toyota" /></div>
+    <div class="form-group"><label>Model</label><input type="text" id="carModel" placeholder="e.g. Camry" /></div>
+    <div class="form-group"><label>Year</label><input type="number" id="carYear" placeholder="e.g. 2022" /></div>
+    <div class="form-group"><label>Category</label>
+      <select id="carCategory">
+        <option>Sedan</option><option>SUV</option><option>Van</option><option>Truck</option><option>Coupe</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Daily Rate ($)</label><input type="number" id="carDailyRate" placeholder="e.g. 50" step="0.01" /></div>
+    <div class="form-group"><label>Licence Plate</label><input type="text" id="carLicencePlate" placeholder="e.g. ABC123" /></div>
+    <div class="form-group"><label>Colour</label><input type="text" id="carColour" placeholder="e.g. Black" /></div>
+    <div class="form-group"><label>Status</label>
+      <select id="carStatus">
+        <option>Available</option><option>Rented</option><option>Maintenance</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="saveCar()">Save Car</button>
+      <button class="btn btn-outline" onclick="closeCarModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://crmsapi.runasp.net';
+  let currentUser = null;
+  let editingCarId = null;
+
+  // ── AUTH ──────────────────────────────────────────
+  async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!username || !password) return showAlert('authAlert', 'Please enter username and password.', 'error');
+
+    const token = btoa(`${username}:${password}`);
+
+    try {
+      // Try to access staff endpoint to verify role
+      const res = await fetch(`${API}/bookings`, {
+        headers: { 'Authorization': `Basic ${token}` }
+      });
+
+      if (res.status === 401) return showAlert('authAlert', 'Invalid username or password.', 'error');
+      if (res.status === 403) return showAlert('authAlert', 'Access denied. Staff or Admin only.', 'error');
+      if (!res.ok) return showAlert('authAlert', 'Login failed.', 'error');
+
+      // Determine role by trying admin endpoint
+      const adminRes = await fetch(`${API}/users`, {
+        headers: { 'Authorization': `Basic ${token}` }
+      });
+      const isAdmin = adminRes.ok;
+      const role = isAdmin ? 'Admin' : 'Staff';
+
+      currentUser = { username, token, role };
+      document.getElementById('welcomeMsg').textContent = `${username} (${role})`;
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+
+      // Show admin-only tabs
+      if (isAdmin) {
+        document.getElementById('tabCars').classList.remove('hidden');
+        document.getElementById('tabUsers').classList.remove('hidden');
+      }
+
+      loadBookings();
+    } catch (e) {
+      showAlert('authAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('tabCars').classList.add('hidden');
+    document.getElementById('tabUsers').classList.add('hidden');
+  }
+
+  // ── TABS ──────────────────────────────────────────
+  function showTab(tabId, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.remove('hidden');
+    btn.classList.add('active');
+    if (tabId === 'carsTab') loadCars();
+    if (tabId === 'usersTab') loadUsers();
+  }
+
+  // ── BOOKINGS ──────────────────────────────────────
+  async function loadBookings() {
+    try {
+      const res = await fetch(`${API}/bookings`, {
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      const bookings = await res.json();
+      const container = document.getElementById('bookingsTable');
+
+      if (!bookings.length) { container.innerHTML = '<p>No bookings found.</p>'; return; }
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Customer</th><th>Car</th><th>Pickup</th><th>Return</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            ${bookings.map(b => `
+              <tr>
+                <td>#${b.id}</td>
+                <td>${b.customerName}</td>
+                <td>${b.carDetails}</td>
+                <td>${formatDate(b.pickupDate)}</td>
+                <td>${formatDate(b.returnDate)}</td>
+                <td>$${b.totalAmount}</td>
+                <td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td>
+                <td>
+                  ${b.status === 'Pending' ? `
+                    <button class="btn btn-sm btn-success" onclick="bookingAction(${b.id}, 'approve')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="bookingAction(${b.id}, 'reject')">Reject</button>
+                  ` : ''}
+                  ${b.status === 'Active' ? `
+                    <button class="btn btn-sm btn-info" onclick="bookingAction(${b.id}, 'complete')">Complete</button>
+                  ` : ''}
+                  ${b.status !== 'Pending' && b.status !== 'Active' ? '—' : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (e) {
+      showAlert('bookingsAlert', 'Failed to load bookings.', 'error');
+    }
+  }
+
+  async function bookingAction(id, action) {
+    try {
+      const res = await fetch(`${API}/bookings/${id}/${action}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        return showAlert('bookingsAlert', msg || 'Action failed.', 'error');
+      }
+      showAlert('bookingsAlert', `Booking ${action}d successfully.`, 'success');
+      loadBookings();
+    } catch (e) {
+      showAlert('bookingsAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  // ── CARS ──────────────────────────────────────────
+  async function loadCars() {
+    try {
+      const res = await fetch(`${API}/cars`, {
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      const cars = await res.json();
+      const grid = document.getElementById('carsGrid');
+
+      if (!cars.length) { grid.innerHTML = '<p>No cars in fleet.</p>'; return; }
+
+      grid.innerHTML = cars.map(car => `
+        <div class="car-card">
+          <h3>${car.year} ${car.make} ${car.model}</h3>
+          <p>📁 ${car.category} &nbsp;|&nbsp; 🎨 ${car.colour}</p>
+          <p>🔖 ${car.licencePlate}</p>
+          <p>💰 $${car.dailyRate}/day</p>
+          <span class="badge badge-${car.status.toLowerCase()}">${car.status}</span>
+          <div class="car-actions">
+            <button class="btn btn-sm btn-outline" onclick='openCarModal(${JSON.stringify(car)})'>Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteCar(${car.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      showAlert('carsAlert', 'Failed to load cars.', 'error');
+    }
+  }
+
+  function openCarModal(car = null) {
+    editingCarId = car ? car.id : null;
+    document.getElementById('carModalTitle').textContent = car ? 'Edit Car' : 'Add New Car';
+    document.getElementById('carMake').value = car?.make || '';
+    document.getElementById('carModel').value = car?.model || '';
+    document.getElementById('carYear').value = car?.year || '';
+    document.getElementById('carCategory').value = car?.category || 'Sedan';
+    document.getElementById('carDailyRate').value = car?.dailyRate || '';
+    document.getElementById('carLicencePlate').value = car?.licencePlate || '';
+    document.getElementById('carColour').value = car?.colour || '';
+    document.getElementById('carStatus').value = car?.status || 'Available';
+    document.getElementById('carModalAlert').innerHTML = '';
+    document.getElementById('carModal').classList.remove('hidden');
+  }
+
+  function closeCarModal() {
+    document.getElementById('carModal').classList.add('hidden');
+    editingCarId = null;
+  }
+
+  async function saveCar() {
+    const make = document.getElementById('carMake').value.trim();
+    const model = document.getElementById('carModel').value.trim();
+    const year = document.getElementById('carYear').value;
+    const dailyRate = document.getElementById('carDailyRate').value;
+    const licencePlate = document.getElementById('carLicencePlate').value.trim();
+    const colour = document.getElementById('carColour').value.trim();
+
+    if (!make || !model || !year || !dailyRate || !licencePlate || !colour)
+      return showAlert('carModalAlert', 'Please fill in all fields.', 'error');
+
+    const body = {
+      make, model,
+      year: parseInt(year),
+      category: document.getElementById('carCategory').value,
+      dailyRate: parseFloat(dailyRate),
+      licencePlate,
+      colour,
+      status: document.getElementById('carStatus').value
+    };
+
+    try {
+      const url = editingCarId ? `${API}/cars/${editingCarId}` : `${API}/cars`;
+      const method = editingCarId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${currentUser.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (res.status === 409) return showAlert('carModalAlert', 'Licence plate already exists.', 'error');
+      if (!res.ok) return showAlert('carModalAlert', 'Failed to save car.', 'error');
+
+      closeCarModal();
+      showAlert('carsAlert', `Car ${editingCarId ? 'updated' : 'added'} successfully.`, 'success');
+      loadCars();
+    } catch (e) {
+      showAlert('carModalAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  async function deleteCar(id) {
+    if (!confirm('Delete this car from the fleet?')) return;
+    try {
+      const res = await fetch(`${API}/cars/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      if (!res.ok) return showAlert('carsAlert', 'Failed to delete car.', 'error');
+      showAlert('carsAlert', 'Car removed successfully.', 'success');
+      loadCars();
+    } catch (e) {
+      showAlert('carsAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  // ── USERS ─────────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API}/users`, {
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      const users = await res.json();
+      const container = document.getElementById('usersTable');
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Username</th><th>Full Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th></tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>#${u.id}</td>
+                <td>${u.username}</td>
+                <td>${u.fullName}</td>
+                <td>${u.email}</td>
+                <td>${u.phone}</td>
+                <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
+                <td>${formatDate(u.createdAt)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (e) {
+      showAlert('usersAlert', 'Failed to load users.', 'error');
+    }
+  }
+
+  // ── HELPERS ───────────────────────────────────────
+  function showAlert(id, msg, type) {
+    document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(() => { const el = document.getElementById(id); if (el) el.innerHTML = ''; }, 4000);
+  }
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString();
+  }
+</script>
+</body>
+</html>

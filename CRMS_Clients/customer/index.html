@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRMS — Customer Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    .hidden { display: none !important; }
+
+    /* NAV */
+    nav { background: #1a1a2e; color: white; padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; }
+    nav h1 { font-size: 1.2rem; letter-spacing: 1px; }
+    nav button { background: #e94560; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; padding: 20px 30px 0; }
+    .tab { padding: 10px 20px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; background: #dde; font-weight: 600; }
+    .tab.active { background: white; color: #e94560; }
+
+    /* CONTENT */
+    .page { background: white; margin: 0 30px 30px; padding: 30px; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+    /* AUTH */
+    .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a1a2e; }
+    .auth-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 420px; }
+    .auth-box h2 { margin-bottom: 24px; color: #1a1a2e; }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 10px; border: 2px solid #dde; border-radius: 8px; cursor: pointer; background: white; font-weight: 600; }
+    .auth-tab.active { border-color: #e94560; color: #e94560; }
+
+    /* FORMS */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #555; }
+    input, select { width: 100%; padding: 10px 14px; border: 1.5px solid #dde; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.2s; }
+    input:focus, select:focus { border-color: #e94560; }
+    .btn { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-outline { background: white; color: #e94560; border: 2px solid #e94560; }
+    .btn-sm { width: auto; padding: 8px 16px; font-size: 0.85rem; margin-top: 0; }
+    .btn-danger { background: #dc3545; }
+
+    /* ALERTS */
+    .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+    .alert-success { background: #d4edda; color: #155724; }
+    .alert-error { background: #f8d7da; color: #721c24; }
+    .alert-info { background: #d1ecf1; color: #0c5460; }
+
+    /* CARS GRID */
+    .cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .car-card { border: 1.5px solid #eee; border-radius: 10px; padding: 20px; transition: box-shadow 0.2s; }
+    .car-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .car-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .car-card p { font-size: 0.88rem; color: #666; margin-bottom: 4px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .badge-available { background: #d4edda; color: #155724; }
+    .badge-rented { background: #f8d7da; color: #721c24; }
+    .badge-maintenance { background: #fff3cd; color: #856404; }
+    .car-rate { font-size: 1.2rem; font-weight: 700; color: #e94560; margin: 10px 0; }
+
+    /* BOOKINGS TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1a1a2e; color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.88rem; }
+    tr:hover td { background: #f9f9ff; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-approved { background: #d4edda; color: #155724; }
+    .badge-active { background: #cce5ff; color: #004085; }
+    .badge-completed { background: #e2e3e5; color: #383d41; }
+    .badge-cancelled { background: #f8d7da; color: #721c24; }
+    .badge-rejected { background: #f8d7da; color: #721c24; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 460px; }
+    .modal h3 { margin-bottom: 20px; }
+    .modal-footer { display: flex; gap: 10px; margin-top: 16px; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-header h2 { font-size: 1.3rem; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" class="auth-wrap">
+  <div class="auth-box">
+    <h2>🚗 CRMS Customer Portal</h2>
+    <div id="authAlert"></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="showAuthTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="Enter username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password" />
+      </div>
+      <button class="btn" onclick="login()">Login</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="hidden">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="Choose a username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Choose a password" />
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="regFullName" placeholder="Your full name" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="regPhone" placeholder="555-1234" />
+      </div>
+      <button class="btn" onclick="register()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden">
+  <nav>
+    <h1>🚗 CRMS Customer Portal</h1>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span id="welcomeMsg" style="font-size:0.9rem;opacity:0.8;"></span>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('carsTab', this)">Browse Cars</button>
+    <button class="tab" onclick="showTab('bookingsTab', this)">My Bookings</button>
+  </div>
+
+  <!-- CARS TAB -->
+  <div id="carsTab" class="page">
+    <div class="section-header">
+      <h2>Available Cars</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadCars()">↻ Refresh</button>
+    </div>
+    <div id="carsAlert"></div>
+    <div id="carsGrid" class="cars-grid">
+      <p>Loading cars...</p>
+    </div>
+  </div>
+
+  <!-- BOOKINGS TAB -->
+  <div id="bookingsTab" class="page hidden">
+    <div class="section-header">
+      <h2>My Bookings</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadMyBookings()">↻ Refresh</button>
+    </div>
+    <div id="bookingsAlert"></div>
+    <div id="bookingsTable"></div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Book a Car</h3>
+    <div id="bookingAlert"></div>
+    <div id="bookingCarInfo" style="background:#f0f2f5;padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.9rem;"></div>
+    <div class="form-group">
+      <label>Pickup Date</label>
+      <input type="date" id="pickupDate" />
+    </div>
+    <div class="form-group">
+      <label>Return Date</label>
+      <input type="date" id="returnDate" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="submitBooking()">Confirm Booking</button>
+      <button class="btn btn-outline" onclick="closeBookingModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://crmsapi.runasp.net';
+  let currentUser = null;
+  let selectedCarId = null;
+  let selectedCar = null;
+
+  // ── AUTH ──────────────────────────────────────────
+  function showAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+    document.getElementById('authAlert').innerHTML = '';
+  }
+
+  async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!username || !password) return showAlert('authAlert', 'Please enter username and password.', 'error');
+
+    const token = btoa(`${username}:${password}`);
+    try {
+      const res = await fetch(`${API}/cars`, {
+        headers: { 'Authorization': `Basic ${token}` }
+      });
+      if (res.status === 401) return showAlert('authAlert', 'Invalid username or password.', 'error');
+      if (!res.ok) return showAlert('authAlert', 'Login failed. Try again.', 'error');
+
+      currentUser = { username, token };
+      document.getElementById('welcomeMsg').textContent = `Welcome, ${username}`;
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      loadCars();
+    } catch (e) {
+      showAlert('authAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  async function register() {
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+
+    if (!username || !password || !fullName || !email || !phone)
+      return showAlert('authAlert', 'Please fill in all fields.', 'error');
+
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, fullName, email, phone })
+      });
+      if (res.status === 409) return showAlert('authAlert', 'Username already taken.', 'error');
+      if (!res.ok) return showAlert('authAlert', 'Registration failed.', 'error');
+      showAlert('authAlert', 'Account created! You can now login.', 'success');
+      showAuthTab('login');
+    } catch (e) {
+      showAlert('authAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+  }
+
+  // ── TABS ──────────────────────────────────────────
+  function showTab(tabId, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.remove('hidden');
+    btn.classList.add('active');
+    if (tabId === 'bookingsTab') loadMyBookings();
+  }
+
+  // ── CARS ──────────────────────────────────────────
+  async function loadCars() {
+    try {
+      const res = await fetch(`${API}/cars`, {
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      const cars = await res.json();
+      const grid = document.getElementById('carsGrid');
+      if (!cars.length) { grid.innerHTML = '<p>No cars available.</p>'; return; }
+
+      grid.innerHTML = cars.map(car => `
+        <div class="car-card">
+          <h3>${car.year} ${car.make} ${car.model}</h3>
+          <p>📁 ${car.category} &nbsp;|&nbsp; 🎨 ${car.colour}</p>
+          <p>🔖 ${car.licencePlate}</p>
+          <div class="car-rate">$${car.dailyRate}/day</div>
+          <span class="badge badge-${car.status.toLowerCase()}">${car.status}</span>
+          ${car.status === 'Available' ? `<br/><br/><button class="btn btn-sm" onclick='openBookingModal(${JSON.stringify(car)})'>Book Now</button>` : ''}
+        </div>
+      `).join('');
+    } catch (e) {
+      showAlert('carsAlert', 'Failed to load cars.', 'error');
+    }
+  }
+
+  // ── BOOKING MODAL ─────────────────────────────────
+  function openBookingModal(car) {
+    selectedCar = car;
+    selectedCarId = car.id;
+    document.getElementById('bookingCarInfo').innerHTML = `<strong>${car.year} ${car.make} ${car.model}</strong> &mdash; $${car.dailyRate}/day`;
+    document.getElementById('bookingAlert').innerHTML = '';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('pickupDate').min = today;
+    document.getElementById('returnDate').min = today;
+    document.getElementById('bookingModal').classList.remove('hidden');
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookingModal').classList.add('hidden');
+  }
+
+  async function submitBooking() {
+    const pickup = document.getElementById('pickupDate').value;
+    const ret = document.getElementById('returnDate').value;
+    if (!pickup || !ret) return showAlert('bookingAlert', 'Please select both dates.', 'error');
+    if (ret <= pickup) return showAlert('bookingAlert', 'Return date must be after pickup date.', 'error');
+
+    try {
+      const res = await fetch(`${API}/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          carId: selectedCarId,
+          pickupDate: new Date(pickup).toISOString(),
+          returnDate: new Date(ret).toISOString()
+        })
+      });
+      if (res.status === 409) return showAlert('bookingAlert', 'Car is not available for those dates.', 'error');
+      if (res.status === 403) return showAlert('bookingAlert', 'Only customers can make bookings.', 'error');
+      if (!res.ok) return showAlert('bookingAlert', 'Booking failed. Try again.', 'error');
+      closeBookingModal();
+      showAlert('carsAlert', 'Booking created successfully! Check My Bookings.', 'success');
+    } catch (e) {
+      showAlert('bookingAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  // ── MY BOOKINGS ───────────────────────────────────
+  async function loadMyBookings() {
+    try {
+      const res = await fetch(`${API}/bookings/my`, {
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      const bookings = await res.json();
+      const container = document.getElementById('bookingsTable');
+      if (!bookings.length) { container.innerHTML = '<p>You have no bookings yet.</p>'; return; }
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Car</th><th>Pickup</th><th>Return</th><th>Total</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            ${bookings.map(b => `
+              <tr>
+                <td>${b.carDetails}</td>
+                <td>${formatDate(b.pickupDate)}</td>
+                <td>${formatDate(b.returnDate)}</td>
+                <td>$${b.totalAmount}</td>
+                <td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td>
+                <td>${b.status === 'Pending' ? `<button class="btn btn-sm btn-danger" onclick="cancelBooking(${b.id})">Cancel</button>` : '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (e) {
+      showAlert('bookingsAlert', 'Failed to load bookings.', 'error');
+    }
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('Cancel this booking?')) return;
+    try {
+      const res = await fetch(`${API}/bookings/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Basic ${currentUser.token}` }
+      });
+      if (!res.ok) return showAlert('bookingsAlert', 'Could not cancel booking.', 'error');
+      showAlert('bookingsAlert', 'Booking cancelled.', 'success');
+      loadMyBookings();
+    } catch (e) {
+      showAlert('bookingsAlert', 'Cannot connect to server.', 'error');
+    }
+  }
+
+  // ── HELPERS ───────────────────────────────────────
+  function showAlert(id, msg, type) {
+    document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  }
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString();
+  }
+</script>
+</body>
+</html>
